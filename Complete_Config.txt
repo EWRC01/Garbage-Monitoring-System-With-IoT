@@ -1,0 +1,516 @@
+-------------------------
+S1, S2, S3
+-------------------------
+enable
+configure terminal
+
+hostname S3
+
+vlan 10 
+name Acceso
+
+vlan 20
+name AccesoAdmin
+
+vlan 30
+name entrada
+
+vlan 40
+name EntradaAdmin
+
+interface range fa0/1-5
+switchport mode access
+switchport access vlan 10
+
+interface range fa0/6-10
+switchport mode access
+switchport access vlan 20
+
+interface range fa0/11-15
+switchport mode access
+switchport access vlan 30
+
+interface range fa0/16-19
+switchport mode access
+switchport access vlan 40
+
+interface range fa0/20-24
+switchport mode trunk
+switchport trunk allowed vlan 10,20,30,40
+
+------------------------------------------
+                 R1-Active
+------------------------------------------
+enable
+configure terminal
+
+hostname R1-Active
+
+interface g0/0
+no shutdown
+
+interface g0/0.10
+encapsulation dot1q 10
+ip address 171.35.10.2 255.255.255.0
+standby 10 ip 171.35.10.1
+standby 10 preempt
+standby 10 priority 101
+
+interface g0/0.20
+encapsulation dot1q 20
+ip address 171.35.20.2 255.255.255.0
+standby 20 ip 171.35.20.1
+standby 20 preempt
+standby 20 priority 101
+
+interface g0/0.30
+encapsulation dot1q 30
+ip address 171.35.30.2 255.255.255.0
+standby 30 ip 171.35.30.1
+standby 30 preempt
+standby 30 priority 101
+
+interface g0/0.40
+encapsulation dot1q 40
+ip address 171.35.40.2 255.255.255.0
+standby 40 ip 171.35.40.1
+standby 40 preempt
+standby 40 priority 101
+
+ip dhcp pool Acceso
+network 171.35.10.0 255.255.255.0
+default-router 171.35.10.1
+
+ip dhcp pool AccesoAdmin
+network 171.35.20.0 255.255.255.0
+default-router 171.35.20.1
+
+ip dhcp pool Entrada
+network 171.35.30.0 255.255.255.0
+default-router 171.35.30.1
+
+ip dhcp pool EntradaAdmin
+network 171.35.40.0 255.255.255.0
+default-router 171.35.40.1
+
+interface g0/1
+ip address 10.35.10.1 255.255.255.0
+no shutdown
+------------------------------------------
+                 R1-Standby
+------------------------------------------
+enable
+configure terminal
+
+hostname R1-Standby
+
+interface g0/0
+no shutdown
+
+interface g0/0.10
+encapsulation dot1q 10
+ip address 171.35.10.3 255.255.255.0
+standby 10 ip 171.35.10.1
+standby 10 preempt
+standby 10 priority 60
+
+interface g0/0.20
+encapsulation dot1q 20
+ip address 171.35.20.3 255.255.255.0
+standby 20 ip 171.35.20.1
+standby 20 preempt
+standby 20 priority 60
+
+interface g0/0.30
+encapsulation dot1q 30
+ip address 171.35.30.3 255.255.255.0
+standby 30 ip 171.35.30.1
+standby 30 preempt
+standby 30 priority 60
+
+interface g0/0.40
+encapsulation dot1q 40
+ip address 171.35.40.3 255.255.255.0
+standby 40 ip 171.35.40.1
+standby 40 preempt
+standby 40 priority 60
+
+ip dhcp pool Acceso
+network 171.35.10.0 255.255.255.0
+default-router 171.35.10.1
+
+ip dhcp pool AccesoAdmin
+network 171.35.20.0 255.255.255.0
+default-router 171.35.20.1
+
+ip dhcp pool Entrada
+network 171.35.30.0 255.255.255.0
+default-router 171.35.30.1
+
+ip dhcp pool EntradaAdmin
+network 171.35.40.0 255.255.255.0
+default-router 171.35.40.1
+
+interface g0/2
+ip address 10.35.20.1 255.255.255.0
+no shutdown
+
+-------------------------------------
+BORDER1
+-------------------------------------
+enable
+configure terminal
+
+hostname Border1
+
+interface g0/1
+ip address 10.35.10.2 255.255.255.0
+no shutdown
+
+interface g0/2
+ip address 10.35.20.2 255.255.255.0
+no shutdown
+
+interface g0/0
+ip address 13.35.10.1 255.255.255.252
+no shutdown
+
+
+----------------------------------------
+
+ISP1
+-----------------------------------------
+enable
+configure terminal
+
+hostname ISP1
+
+interface g0/0
+ip address 209.165.100.2 255.255.255.0
+no shutdown
+
+interface g0/1
+ip address 80.80.80.1 255.255.255.0
+no shutdown
+
+interface g0/2
+ip address 182.59.10.1 255.255.255.252
+no shutdown
+
+----------------------------------------
+Enrutamiento OSPF
+----------------------------------------
+************
+R1-Active
+************
+router ospf 28
+router-id 1.1.1.1
+network 171.35.10.0 0.0.0.255 area 1
+network 171.35.20.0 0.0.0.255 area 1
+network 171.35.30.0 0.0.0.255 area 1
+network 171.35.40.0 0.0.0.255 area 1
+network 10.35.10.0 0.0.0.255 area 0
+
+************
+R1-Standby
+************
+router ospf 28
+router-id 2.2.2.2
+network 171.35.10.0 0.0.0.255 area 1
+network 171.35.20.0 0.0.0.255 area 1
+network 171.35.30.0 0.0.0.255 area 1
+network 171.35.40.0 0.0.0.255 area 1
+network 10.35.20.0 0.0.0.255 area 0
+
+************
+BORDER1
+************
+router ospf 28
+router-id 3.3.3.3
+network 10.35.10.0 0.0.0.255 area 0
+network 10.35.20.0 0.0.0.255 area 0
+
+ip route 0.0.0.0 0.0.0.0 g0/0
+
+router ospf 28
+default-information originate
+
+
+
+************
+ISP
+************
+ip route 0.0.0.0 0.0.0.0 g0/0
+
+
+----------------------------------------------
+SEGUNDA PARTE
+----------------------------------------------
+
+----------------------------------------------
+SW-1, SW-2, SW-3
+----------------------------------------------
+enable
+configure terminal
+
+hostname SW3
+
+vlan 50
+name Bodega
+
+vlan 60
+name BodegaAdmin
+
+
+
+interface range fa0/1-9
+switchport mode access
+switchport access vlan 50
+
+interface range fa0/10-19
+switchport mode access
+switchport access vlan 60
+
+interface range fa0/20-24
+switchport mode trunk
+
+------------------------------------------
+                 R2-Active
+------------------------------------------
+enable
+configure terminal
+
+hostname R2-Active
+
+interface g0/0
+no shutdown
+
+interface g0/0.50
+encapsulation dot1q 50
+ip address 192.35.50.2 255.255.255.0
+standby 50 ip 192.35.50.1 
+standby 50 preempt
+standby 50 priority 101
+
+interface g0/0.60
+encapsulation dot1q 60
+ip address 192.35.60.2 255.255.255.0
+standby 60 ip 192.35.60.1 
+standby 60 preempt
+standby 60 priority 101
+
+ip dhcp pool Bodega
+network 192.35.50.0 255.255.255.0
+default-router 192.35.50.1
+
+ip dhcp pool BodegaAdmin
+network 192.35.60.0 255.255.255.0
+default-router 192.35.60.1
+
+interface g0/1
+ip address 11.35.10.1 255.255.255.0
+no shutdown
+------------------------------------------
+                 R2-Standby
+------------------------------------------
+enable
+configure terminal
+
+hostname R2-Standby
+
+interface g0/0
+no shutdown
+
+interface g0/0.50
+encapsulation dot1q 50
+ip address 192.35.50.3 255.255.255.0
+standby 50 ip 192.35.50.1 
+standby 50 preempt
+standby 50 priority 60
+
+interface g0/0.60
+encapsulation dot1q 60
+ip address 192.35.60.3 255.255.255.0
+standby 60 ip 192.35.60.1 
+standby 60 preempt
+standby 60 priority 60
+
+ip dhcp pool Bodega
+network 192.35.50.0 255.255.255.0
+default-router 192.35.50.1
+
+ip dhcp pool BodegaAdmin
+network 192.35.60.0 255.255.255.0
+default-router 192.35.60.1
+
+interface g0/2
+ip address 11.35.20.1 255.255.255.0
+no shutdown
+
+-------------------------------------
+BORDER2
+-------------------------------------
+enable
+configure terminal
+
+hostname Border2
+
+interface g0/1
+ip address 11.35.10.2 255.255.255.0
+no shutdown
+
+interface g0/2
+ip address 11.35.20.2 255.255.255.0
+no shutdown
+
+interface g0/0
+ip address 13.35.20.1 255.255.255.252
+no shutdown
+
+----------------------------------------
+
+ISP
+-----------------------------------------
+enable
+configure terminal
+
+hostname ISP
+
+interface g0/0
+ip address 13.35.10.2 255.255.255.252
+no shutdown
+
+interface g0/1
+ip address 13.35.20.2 255.255.255.252
+no shutdown
+
+interface g0/2
+ip address 192.168.0.1 255.255.255.0
+no shutdown
+
+----------------------------------------
+Enrutamiento OSPF
+----------------------------------------
+************
+R2-Active
+************
+router ospf 28
+router-id 5.5.5.5
+network 192.35.50.0 0.0.0.255 area 2
+network 192.35.60.0 0.0.0.255 area 2
+network 11.35.10.0 0.0.0.255 area 0
+
+************
+R2-Standby
+************
+router ospf 28
+router-id 6.6.6.6
+network 192.35.50.0 0.0.0.255 area 2
+network 192.35.60.0 0.0.0.255 area 2
+network 11.35.20.0 0.0.0.255 area 0
+************
+BORDER2
+************
+router ospf 28
+router-id 7.7.7.7
+network 11.35.10.0 0.0.0.255 area 0
+network 11.35.20.0 0.0.0.255 area 0
+
+ip route 0.0.0.0 0.0.0.0 g0/0
+
+router ospf 28
+default-information originate
+
+
+------------------------------------
+NAT con sobrecarga BORDER 1
+------------------------------------
+ip nat pool NAT 200.165.100.1 200.165.100.1 netmask 255.255.255.0
+access-list 1 permit any 
+ip nat inside source list 1 pool NAT overload
+
+interface g0/0
+ip nat outside
+
+interface g0/1
+ip nat inside
+
+interface g0/2
+ip nat inside
+
+------------------------------------
+NAT con sobrecarga BORDER 2
+------------------------------------
+ip nat pool NAT1 200.165.200.1 200.165.200.1 netmask 255.255.255.0
+access-list 1 permit any 
+ip nat inside source list 1 pool NAT1 overload
+
+interface g0/0
+ip nat outside
+
+interface g0/1
+ip nat inside
+
+interface g0/2
+ip nat inside
+
+---------------------------------
+BORDER 1
+---------------------------------
+interface tunnel 0 
+ip address 11.35.0.1 255.255.255.252
+tunnel source g0/0
+tunnel destination 13.35.20.1
+tunnel mode gre ip
+
+---------------------------------
+BORDER 2
+---------------------------------
+interface tunnel 0 
+ip address 11.35.0.2 255.255.255.252
+tunnel source g0/0
+tunnel destination 13.35.10.1
+tunnel mode gre ip
+
+
+-------------------------------------------
+Listas de control de acceso 
+-------------------------------------------
+access-list 110 deny icmp 171.35.10.0 0.0.0.255 host 192.168.0.10 echo-reply
+access-list 110 deny tcp 171.35.10.0 0.0.0.255 host 192.168.0.10 eq www
+
+interface g0/0.10
+ip access-group 110 out
+
+access-list 130 deny icmp 171.35.30.0 0.0.0.255 host 192.168.0.10 echo-reply
+access-list 130 deny tcp 171.35.30.0 0.0.0.255 host 192.168.0.10 eq www
+
+interface g0/0.30
+ip access-group 130 out
+
+-------------------------------------------
+Listas de control de acceso  2
+-------------------------------------------
+access-list 150 deny icmp 192.35.50.0 0.0.0.255 host 192.168.0.10 echo-reply
+access-list 150 deny tcp 192.35.50.0 0.0.0.255 host 192.168.0.10 eq www
+
+interface g0/0.50
+ip access-group 150 out
+
+
+*********************************************************
+Realizado Por:
+Edwin Rodriguez
+Carlos Nieto
+Adonay Aragon
+Alejandro Garcia
+Mauricio Martinez
+Wilder Romero
+
+
+
+
+
+
+
+
